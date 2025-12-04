@@ -147,6 +147,9 @@ function App() {
     url: '',
     title: ''
   });
+
+  // Mobile Search State
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   
   // --- Helpers & Sync Logic ---
 
@@ -2093,7 +2096,7 @@ function App() {
                  title="Fork this project on GitHub"
                >
                  <GitFork size={14} />
-                 <span>Fork 项目 v1.5</span>
+                 <span>Fork 项目 v1.5.1</span>
                </a>
             </div>
         </div>
@@ -2111,8 +2114,23 @@ function App() {
 
             {/* 搜索模式切换 + 搜索框 */}
             <div className="flex items-center gap-3 flex-1 min-w-0">
-              {/* 搜索模式切换 */}
-              <div className="flex items-center gap-2 flex-shrink-0">
+              {/* 移动端搜索图标 - 仅在手机端显示，平板端隐藏 */}
+              <button 
+                onClick={() => {
+                  setIsMobileSearchOpen(!isMobileSearchOpen);
+                  // 手机端点击搜索图标时默认使用站外搜索
+                  if (searchMode !== 'external') {
+                    handleSearchModeChange('external');
+                  }
+                }}
+                className="sm:flex md:hidden lg:hidden p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors"
+                title="搜索"
+              >
+                <Search size={20} />
+              </button>
+
+              {/* 搜索模式切换 - 平板端和桌面端显示，手机端隐藏 */}
+              <div className="hidden sm:hidden md:flex lg:flex items-center gap-2 flex-shrink-0">
                 <div className="flex items-center bg-slate-100 dark:bg-slate-700 rounded-full p-1">
                   <button
                     onClick={() => handleSearchModeChange('internal')}
@@ -2151,7 +2169,7 @@ function App() {
               </div>
 
               {/* 搜索框 */}
-              <div className="relative w-full max-w-lg hidden sm:block">
+              <div className={`relative w-full max-w-lg ${isMobileSearchOpen ? 'block' : 'hidden'} sm:block`}>
                 {/* 搜索源选择弹出窗口 */}
                 {searchMode === 'external' && showSearchSourcePopup && (
                   <div 
@@ -2159,7 +2177,7 @@ function App() {
                     onMouseEnter={() => setIsPopupHovered(true)}
                     onMouseLeave={() => setIsPopupHovered(false)}
                   >
-                    <div className="grid grid-cols-5 gap-2">
+                    <div className="grid grid-cols-5 sm:grid-cols-5 gap-2">
                       {externalSearchSources
                         .filter(source => source.enabled)
                         .map((source, index) => (
@@ -2168,7 +2186,7 @@ function App() {
                             onClick={() => handleSearchSourceSelect(source)}
                             onMouseEnter={() => setHoveredSearchSource(source)}
                             onMouseLeave={() => setHoveredSearchSource(null)}
-                            className="px-2 py-2 text-sm rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 flex items-center gap-1"
+                            className="px-2 py-2 text-sm rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 flex items-center gap-1 justify-center"
                           >
                             <img 
                               src={`https://www.faviconextractor.com/favicon/${new URL(source.url).hostname}?larger=true`}
@@ -2179,7 +2197,7 @@ function App() {
                                 target.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLXNlYXJjaCI+PHBhdGggZD0ibTIxIDIxLTQuMzQtNC4zNCI+PC9wYXRoPjxjaXJjbGUgY3g9IjExIiBjeT0iMTEiIHI9IjgiPjwvY2lyY2xlPjwvc3ZnPg==';
                               }}
                             />
-                            <span className="truncate">{source.name}</span>
+                            <span className="truncate hidden sm:inline">{source.name}</span>
                           </button>
                         ))}
                     </div>
@@ -2191,6 +2209,12 @@ function App() {
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 cursor-pointer"
                   onMouseEnter={() => searchMode === 'external' && setIsIconHovered(true)}
                   onMouseLeave={() => setIsIconHovered(false)}
+                  onClick={() => {
+                    // 移动端点击事件：显示搜索源选择窗口
+                    if (searchMode === 'external') {
+                      setShowSearchSourcePopup(!showSearchSourcePopup);
+                    }
+                  }}
                 >
                   {searchMode === 'internal' ? (
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-search">
@@ -2229,6 +2253,10 @@ function App() {
                     }
                   }}
                   className="w-full pl-9 pr-4 py-2 rounded-full bg-slate-100 dark:bg-slate-700/50 border-none text-sm focus:ring-2 focus:ring-blue-500 dark:text-white placeholder-slate-400 outline-none transition-all"
+                  // 移动端优化：防止页面缩放
+                  style={{ fontSize: '16px' }}
+                  inputMode="search"
+                  enterKeyHint="search"
                 />
                 
                 {searchMode === 'external' && searchQuery.trim() && (
@@ -2245,8 +2273,8 @@ function App() {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* 视图切换控制器 */}
-            <div className="flex items-center bg-slate-100 dark:bg-slate-700 rounded-full p-1">
+            {/* 视图切换控制器 - 移动端：搜索框展开时隐藏，桌面端始终显示 */}
+            <div className={`${isMobileSearchOpen ? 'hidden' : 'flex'} lg:flex items-center bg-slate-100 dark:bg-slate-700 rounded-full p-1`}>
               <button
                 onClick={() => handleViewModeChange('compact')}
                 className={`px-3 py-1 text-xs font-medium rounded-full transition-all ${
@@ -2271,26 +2299,33 @@ function App() {
               </button>
             </div>
 
-            <button onClick={toggleTheme} className="p-2 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">
+            {/* 主题切换按钮 - 移动端：搜索框展开时隐藏，桌面端始终显示 */}
+            <button onClick={toggleTheme} className={`${isMobileSearchOpen ? 'hidden' : 'flex'} lg:flex p-2 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700`}>
               {darkMode ? <Sun size={18} /> : <Moon size={18} />}
             </button>
 
-            {!authToken ? (
-                <button onClick={() => setIsAuthOpen(true)} className="flex items-center gap-2 bg-slate-200 dark:bg-slate-700 px-3 py-1.5 rounded-full text-xs font-medium">
-                    <Cloud size={14} /> <span className="hidden sm:inline">登录</span>
-                </button>
-            ) : (
-                <button onClick={handleLogout} className="flex items-center gap-2 bg-slate-200 dark:bg-slate-700 px-3 py-1.5 rounded-full text-xs font-medium">
-                    <LogOut size={14} /> <span className="hidden sm:inline">退出</span>
-                </button>
-            )}
+            {/* 登录/退出按钮 - 移动端：搜索框展开时隐藏，桌面端始终显示 */}
+            <div className={`${isMobileSearchOpen ? 'hidden' : 'flex'}`}>
+              {!authToken ? (
+                  <button onClick={() => setIsAuthOpen(true)} className="flex items-center gap-2 bg-slate-200 dark:bg-slate-700 px-3 py-1.5 rounded-full text-xs font-medium">
+                      <Cloud size={14} /> <span className="hidden sm:inline">登录</span>
+                  </button>
+              ) : (
+                  <button onClick={handleLogout} className="flex items-center gap-2 bg-slate-200 dark:bg-slate-700 px-3 py-1.5 rounded-full text-xs font-medium">
+                      <LogOut size={14} /> <span className="hidden sm:inline">退出</span>
+                  </button>
+              )}
+            </div>
 
-            <button
-              onClick={() => { if(!authToken) setIsAuthOpen(true); else { setEditingLink(undefined); setIsModalOpen(true); }}}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-full text-sm font-medium shadow-lg shadow-blue-500/30"
-            >
-              <Plus size={16} /> <span className="hidden sm:inline">添加</span>
-            </button>
+            {/* 添加按钮 - 移动端：搜索框展开时隐藏，桌面端始终显示 */}
+            <div className={`${isMobileSearchOpen ? 'hidden' : 'flex'}`}>
+              <button
+                onClick={() => { if(!authToken) setIsAuthOpen(true); else { setEditingLink(undefined); setIsModalOpen(true); }}}
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-full text-sm font-medium shadow-lg shadow-blue-500/30"
+              >
+                <Plus size={16} /> <span className="hidden sm:inline">添加</span>
+              </button>
+            </div>
           </div>
         </header>
 
